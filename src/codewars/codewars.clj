@@ -127,3 +127,47 @@
   ([] 0)
   ([name] (if (= name "Zach") 18 0)))
 
+
+
+
+;; http://www.codewars.com/kata/localize-the-barycenter-of-a-triangle/train/clojure
+;; (ns barycenter.core)
+
+(defn bar-triang 
+  [[a b] [c d] [e f]]
+  (let [x (/ (+ a c e) 3)
+        y (/ (+ b d f) 3)]
+    [(Double. (format "%.4f" (float x))) (Double. (format "%.4f"  (float y)))]))
+
+
+
+;; http://www.codewars.com/kata/number-pairs/train/clojure
+;; (ns number-pairs)
+;; (= arr1 [13, 64, 15, 17, 88])
+;; (= arr2 [23, 14, 53, 17, 80])
+;; (= (getLargerNumbers arr1 arr2) [23 64 53 17 88])
+
+(defn get-larger-numbers [a b]
+  (mapv #(apply max [%1 %2]) a b))
+
+
+
+;; http://www.codewars.com/kata/mergesort-merge-function/train/clojure
+
+;; (deftest Tests
+;;   (is (= (mergesorted [1 2] [3]) (range 1 4)))
+;;   (is (= (mergesorted [1 2] [3 4]) (range 1 5)))
+;;   (is (= (mergesorted [1] [2 3 4]) (range 1 5)))
+;;   (is (= (mergesorted [] [1 2 3 4]) (range 1 5)))
+;;   (is (= (mergesorted [1 2 3 4] []) (range 1 5))))
+
+
+(defn mergesorted
+  [[a_x & a_xs :as a] [b_x & b_xs :as b]]
+  (cond
+    (nil? a_x) b
+    (nil? b_x) a
+    :else (if (< a_x b_x)
+            (cons a_x (mergesorted a_xs b))
+            (cons b_x (mergesorted a b_xs)))))
+
