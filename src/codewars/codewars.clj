@@ -130,6 +130,7 @@
 
 
 
+;; ----------------------------------------------------------------------------------------------------
 ;; http://www.codewars.com/kata/localize-the-barycenter-of-a-triangle/train/clojure
 ;; (ns barycenter.core)
 
@@ -140,7 +141,7 @@
     [(Double. (format "%.4f" (float x))) (Double. (format "%.4f"  (float y)))]))
 
 
-
+;; ----------------------------------------------------------------------------------------------------
 ;; http://www.codewars.com/kata/number-pairs/train/clojure
 ;; (ns number-pairs)
 ;; (= arr1 [13, 64, 15, 17, 88])
@@ -151,7 +152,7 @@
   (mapv #(apply max [%1 %2]) a b))
 
 
-
+;; ----------------------------------------------------------------------------------------------------
 ;; http://www.codewars.com/kata/mergesort-merge-function/train/clojure
 
 ;; (deftest Tests
@@ -160,7 +161,6 @@
 ;;   (is (= (mergesorted [1] [2 3 4]) (range 1 5)))
 ;;   (is (= (mergesorted [] [1 2 3 4]) (range 1 5)))
 ;;   (is (= (mergesorted [1 2 3 4] []) (range 1 5))))
-
 
 (defn mergesorted
   [[a_x & a_xs :as a] [b_x & b_xs :as b]]
@@ -171,3 +171,209 @@
             (cons a_x (mergesorted a_xs b))
             (cons b_x (mergesorted a b_xs)))))
 
+
+;; ----------------------------------------------------------------------------------------------------
+;;  http://www.codewars.com/kata/560a4962c0cc5c2a16000068/train/clojure
+
+;; (deftest a-test1
+;;   (testing "Basic tests"    
+;;     (is (= (eq-sum-pow-dig 100 2) []))
+;;     (is (= (eq-sum-pow-dig 1000 2) []))
+;;     (is (= (eq-sum-pow-dig 2000 2) []))
+;;     (is (= (eq-sum-pow-dig 200 3) [153]))
+;;     (is (= (eq-sum-pow-dig 370 3) [153 370]))
+;;     ))
+
+;; this 1st solution is too slow for final test
+(defn digits [num]
+  (map #(Character/getNumericValue %) (seq (str num))))
+
+(defn power [x n] (reduce * (repeat n x)))
+
+(defn sum-pow-same [num po]
+  (let [digits (digits num)
+        total (apply + (map #(power % po) digits))]
+    (= total num)))
+
+(defn eq-sum-pow-dig [hmax po]
+  (filter #(sum-pow-same % po) (range 2 (inc hmax))))
+
+;; 2nd version
+(defn eq-sum-pow-dig [num po]
+  (letfn [(power [x n] (reduce * (repeat n x)))
+          (testfn [num po] (= (apply + (map #(power (Character/getNumericValue %) po) (seq (str num)))) num))]
+    (filter #(testfn % po) (range 2 (inc num)))))
+
+;; 3rd version
+;; Precalculate powers of digits into a map
+(defn build-single-digit-power-map 
+  "Build a map of powers for the digits 0 to 9
+  For example, for the power 2
+  {0 0, 7 49, 1 1, 4 16, 6 36, 3 9, 2 4, 9 81, 5 25, 8 64}"
+  [po]
+  (let [digits (map #(Integer/valueOf %) (range 1 10))]
+    (letfn [(power [x n] (reduce * (repeat n x)))]
+      (loop [acc {0 0}
+             nums digits]
+        (if (empty? nums) 
+          acc
+          (let [num (first nums)
+                pow (power num po)]
+            (recur (assoc acc num pow) (rest nums))))))))
+
+(defn sum-powers 
+  "Using our powers map from 'build-single-digit-power-map' sum the digits raised to the power.
+  - Convert the number to a series of digits
+  - Use the digits to key into the map
+  - Add the results"
+  [powers num] 
+  (let [digits (map #(Integer/valueOf (str %)) (seq (str num)))]
+    (apply + (map #(powers %) digits))))
+
+(defn eq-sum-pow-dig [num po]
+  (let [powers (build-single-digit-power-map  po)]
+    (filter #(= (sum-powers powers %) %) (range 2 (inc num)))))
+
+
+;; ----------------------------------------------------------------------------------------------------
+;;
+;; (let [fives (factory 5)]      ; returns a function - fives
+;;   (fives [1 2 3]))   
+
+(defn factory [x]
+  (fn [xs] (map #(* x %) xs)))
+
+
+;; ----------------------------------------------------------------------------------------------------
+;; 7 kyu Excel sheet column numbers
+
+;; (defn title-to-nb [title]
+  ; your code)
+
+;; (deftest a-test1
+;;   (testing "Basic tests"
+;;     (is (= (title-to-nb "A") 1))
+;;     (is (= (title-to-nb "Z") 26))
+;;     (is (= (title-to-nb "AA") 27))
+;;     (is (= (title-to-nb "AZ") 52))
+;;     (is (= (title-to-nb "BA") 53))
+;;     (is (= (title-to-nb "CODEWARS") 28779382963))    
+;; ))
+
+
+(defn twenty-six-power [n]
+  (reduce * (repeat n 26)))
+
+(defn letter-value 
+  "A == 1, ... Z == 26"
+  [c]
+  (- (int c) 64))
+
+(defn title-to-nb 
+  [title]
+  ;; reverse
+  ;; recurse and get value of each letter (1-26) * 26 ^ n
+  ;; where n is the position in the string from right to left
+  ;; the first position is 0
+  (let [s (reverse title)]
+    (loop [s (reverse title)
+           acc 0
+           n 0]
+      (if (empty? s)
+        acc
+        (recur (rest s) (+ acc (* (letter-value (first s)) (twenty-six-power n))) (inc n))))))
+
+
+;; ----------------------------------------------------------------------------------------------------
+;; 7 - Growth of a Population
+
+;; population
+;; percent change
+;; other additions
+;; desired total
+;; new-population = existing-total + (existing-total * percent) + aug
+
+(defn nb-year [p0 percent aug p]
+  (let [percent (/ percent 100)
+        additions aug
+        desired-total p]
+    (loop [population p0
+           number-of-years 0]
+      (if (>= population desired-total)
+        number-of-years
+        (let [new-population (+ (+ population (* percent population)) aug)]
+          (recur new-population (inc number-of-years)))))))
+
+;; ----------------------------------------------------------------------------------------------------
+;; 7 kyu - A Rule of Divisibility by 13
+
+;; When you divide the successive powers of 10 by 13 you get the following remainders of the integer divisions:
+;; 1, 10, 9, 12, 3, 4.
+
+(defn mult-list [] (cycle [1 10 9 12 3 4]))
+
+(defn digitize [num] (vec (reverse (map #(Character/getNumericValue %) (seq (str num))))))
+
+(defn thirtfn [num] (apply + (map #(* %1 %2) (digitize num) (mult-list))))
+
+(defn thirt
+  [num]
+  (loop [num num]
+    (let [next (thirtfn num)]
+      (if (= next num)
+        num
+        (recur next)))))
+
+
+;; ----------------------------------------------------------------------------------------------------
+;; 
+;; 6 kyu - Highest Rank Number in an Array
+
+;; [12 10 8 12 7 6 4 10 12]
+
+;; (val (first (reverse (sort-by #(val %) (seq (frequencies [12 10 8 12 7 6 4 10 12 11 11 11]))))))
+
+(defn highest-rank 
+  "Returns the most frequent entry in the data ISeq"
+  [data]
+  (let [ranks (reverse (sort-by #(val %) (seq (frequencies data))))
+        max-val (val (first ranks))
+        ]
+    (apply max (map first (filter (fn [[x y]] (= max-val y)) ranks)))
+    )
+  )
+
+;; ----------------------------------------------------------------------------------------------------
+;;
+
+;; a = [121, 144, 19, 161, 19, 144, 19, 11] 
+;; b = [11*11, 121*121, 144*144, 19*19, 161*161, 19*19, 144*144, 19*19]
+
+;; elements in b are squares of elements in a
+
+
+(defn compSame [a b]
+  (if (and (seq a) (seq b))
+    (let [as (into #{} (map (fn [x] (* x x)) a))
+          bs (into #{} b)]
+      (= as bs))
+    (if (and (empty? a) (empty? b))
+      (if (and (not (nil? a)) (not (nil? b)))
+        true
+        false)
+      false
+      )
+    )
+  )
+
+
+(compSame 
+[121, 144, 19, 161, 19, 144, 19, 11]  
+[132, 14641, 20736, 361, 25921, 361, 20736, 361])
+(compSame 
+ [121, 144, 19, 161, 19, 144, 19, 11]  
+ [121, 14641, 20736, 36100, 25921, 361, 20736, 361])
+(compSame [] [1])
+(compSame [] [])
+(compSame [] nil)
+(compSame [121, 144, 19, 161, 19, 144, 19, 11] [121, 14641, 20736, 361, 25921, 361, 20736, 361])
